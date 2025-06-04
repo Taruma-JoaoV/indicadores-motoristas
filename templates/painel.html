@@ -18,18 +18,23 @@
 
     <h2>Filtrar Indicadores</h2>
     <div id="filtros">
-        <label for="filtroData">Data:</label>
-        <input type="date" id="filtroData">
+        <form method="GET" action="/painel">
+            <label for="mes">Filtrar por mês:</label>
+            <input type="month" id="mes" name="mes" value="{{ mes_atual }}">
+            <button type="submit" id="filtroMes">Filtrar</button>
+        </form>
 
-        <label for="filtroIndicador">Indicador:</label>
-        <select id="filtroIndicador">
-            <option value="todos">Todos</option>
-            <option value="Devolucao_Porcentagem">% Devolução (PDV)</option>
-            <option value="Dispersao_KM">Dispersão (KM)</option>
-            <option value="Rating">Rating</option>
-            <option value="Reposicao_Valor">Reposição</option>
-            <option value="Refugo_Porcentagem">Refugo (%)</option>
-        </select>
+        <div>
+            <label for="filtroIndicador">Indicador:</label>
+            <select id="filtroIndicador">
+                <option value="todos">Todos</option>
+                <option value="Devolucao_Porcentagem">% Devolução (PDV)</option>
+                <option value="Dispersao_KM">Dispersão (KM)</option>
+                <option value="Rating">Rating</option>
+                <option value="Reposicao_Valor">Reposição</option>
+                <option value="Refugo_Porcentagem">Refugo (%)</option>
+            </select>
+        </div>
     </div>
 
     <h2>Indicadores</h2>
@@ -107,50 +112,42 @@
 
     <!-- Scripts de Filtro -->
     <script>
-        document.getElementById('filtroData').addEventListener('input', function () {
-            const dataFiltro = this.value;
-            const linhas = document.querySelectorAll('tbody tr');
-
-            linhas.forEach(linha => {
-                const data = linha.cells[0].innerText;
-                linha.style.display = (!dataFiltro || data === dataFiltro) ? '' : 'none';
-            });
-        });
-
         document.getElementById('filtroIndicador').addEventListener('change', function () {
-            const indicador = this.value;
-            const ths = document.querySelectorAll('thead th');
-            const trs = document.querySelectorAll('tbody tr, tfoot tr');
+        const indicador = this.value;
+        const ths = document.querySelectorAll('thead th');
+        const trs = document.querySelectorAll('tbody tr, tfoot tr');
 
-            // Mostra todas as colunas
+        // Mostra todas as colunas
+        for (let i = 1; i < ths.length; i++) {
+            ths[i].style.display = '';
+            trs.forEach(tr => {
+                if (tr.children[i]) tr.children[i].style.display = '';
+            });
+        }
+
+        // Esconde colunas não selecionadas
+        if (indicador !== 'todos') {
+            const indexMap = {
+                'Devolucao_Porcentagem': 1,
+                'Dispersao_KM': 2,
+                'Rating': 3,
+                'Reposicao_Valor': 4,
+                'Refugo_Porcentagem': 5
+            };
+
+            const colunaDesejada = indexMap[indicador];
+
             for (let i = 1; i < ths.length; i++) {
-                ths[i].style.display = '';
-                trs.forEach(tr => {
-                    tr.children[i].style.display = '';
-                });
-            }
-
-            // Esconde colunas não selecionadas
-            if (indicador !== 'todos') {
-                const indexMap = {
-                    'Devolucao_Porcentagem': 1,
-                    'Dispersao_KM': 2,
-                    'Rating': 3,
-                    'Reposicao_Valor': 4,
-                    'Refugo_Porcentagem': 5
-                };
-
-                for (let i = 1; i < ths.length; i++) {
-                    if (i !== indexMap[indicador]) {
-                        ths[i].style.display = 'none';
-                        trs.forEach(tr => {
-                            tr.children[i].style.display = 'none';
-                        });
-                    }
+                if (i !== colunaDesejada) {
+                    ths[i].style.display = 'none';
+                    trs.forEach(tr => {
+                        if (tr.children[i]) tr.children[i].style.display = 'none';
+                    });
                 }
             }
-        });
-        </script>
+        }
+    });
+    </script>
 
 </body>
 </html>

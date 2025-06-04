@@ -68,12 +68,16 @@ def calcular_media(lista, chave, ignora_percentual=False):
     media = sum(valores) / len(valores)
     return round(media, 2)
 
+from flask import request
+
 @app.route('/painel')
 def painel():
     if 'id_motorista' not in session:
         return redirect(url_for('login'))
 
     id_motorista = session['id_motorista']
+    mes_selecionado = request.args.get('mes', '')
+
     conexao = conectar_banco()
     dados_formatados = []
     observacoes = []
@@ -81,8 +85,7 @@ def painel():
     if conexao:
         cursor = conexao.cursor(as_dict=True)
         try:
-            # Buscar indicadores
-            cursor.execute("""
+            query = """
                 SELECT 
                     CONVERT(varchar, D.Data, 23) AS DataISO, 
                     D.Devolucao_Porcentagem, 
@@ -96,9 +99,17 @@ def painel():
                 LEFT JOIN Reposicao P ON D.ID_Motorista = P.ID_Motorista AND D.Data = P.Data
                 LEFT JOIN Refugo F ON D.ID_Motorista = F.ID_Motorista AND D.Data = F.Data
                 WHERE D.ID_Motorista = %s
-                ORDER BY D.Data ASC
-            """, (id_motorista,))
-            
+            """
+
+            params = [id_motorista]
+
+            if mes_selecionado:
+                query += " AND FORMAT(D.Data, 'yyyy-MM') = %s"
+                params.append(mes_selecionado)
+
+            query += " ORDER BY D.Data ASC"
+
+            cursor.execute(query, tuple(params))
             resultados = cursor.fetchall()
 
             for linha in resultados:
@@ -125,7 +136,6 @@ def painel():
                     reposicao = linha['Reposicao_Valor'] if linha['Reposicao_Valor'] is not None else 0
                     refugo = linha['Refugo_Porcentagem'] if linha['Refugo_Porcentagem'] is not None else 0
 
-                # Rating sempre entra, independente da Devolução
                 rating = linha['Rating'] if linha['Rating'] is not None else "-"
 
                 dados_formatados.append({
@@ -137,8 +147,6 @@ def painel():
                     'Refugo_Porcentagem': refugo
                 })
 
-
-            # Buscar observações
             cursor.execute("SELECT Texto FROM Observacoes WHERE ID_Motorista = %s", (id_motorista,))
             observacoes = [linha['Texto'] for linha in cursor.fetchall()]
 
@@ -159,13 +167,15 @@ def painel():
     media_refugo = calcular_media(dados_formatados, 'Refugo_Porcentagem', ignora_percentual=True)
 
     return render_template('painel.html', dados=dados_formatados, observacoes=observacoes,
-                       medias={
-                           'Devolucao_Porcentagem': media_devolucao_porcentagem,
-                           'Dispersao_KM': media_dispersao_km,
-                           'Rating': media_rating,
-                           'Reposicao_Valor': f"{soma_reposicao:.2f}".replace('.', ','),
-                           'Refugo_Porcentagem': media_refugo
-})
+                           medias={
+                               'Devolucao_Porcentagem': media_devolucao_porcentagem,
+                               'Dispersao_KM': media_dispersao_km,
+                               'Rating': media_rating,
+                               'Reposicao_Valor': f"{soma_reposicao:.2f}".replace('.', ','),
+                               'Refugo_Porcentagem': media_refugo
+                           },
+                           mes_atual=mes_selecionado or "")
+
 
 
 @app.route('/painel_supervisor', methods=['GET', 'POST'])
@@ -176,10 +186,14 @@ def painel_supervisor():
     indicadores = None
     mensagem = ''
 
+    # Inicializa as variáveis que serão usadas para manter estado no template
+    filtro_mes = None
+    id_selecionado = None
+
     if conexao:
         cursor = conexao.cursor(as_dict=True)
 
-        # Buscar lista de motoristas para o select
+        # Busca a lista de motoristas para o select
         cursor.execute("""
             SELECT DISTINCT M.ID_Motorista, M.Nome_Completo
             FROM Motoristas M
@@ -199,30 +213,51 @@ def painel_supervisor():
 
         funcionarios = cursor.fetchall()
 
-        # Se o supervisor escolheu um motorista para visualizar indicadores
         if request.method == 'POST':
             id_selecionado = request.form.get('id_motorista_selecionado')
+            filtro_mes = request.form.get('filtro_mes')  # Pega o mês enviado pelo form
 
-            # Buscar indicadores do motorista selecionado
-            cursor.execute("""
-                SELECT 
-                    CONVERT(varchar, D.Data, 23) AS DataISO, 
-                    D.Devolucao_Porcentagem, 
-                    ISNULL(S.Dispersao_KM, 0) AS Dispersao_KM,
-                    R.Rating,
-                    ISNULL(P.Reposicao_Valor, 0) AS Reposicao_Valor,
-                    ISNULL(F.Refugo_Porcentagem, 0) AS Refugo_Porcentagem
-                FROM Devolucao D
-                LEFT JOIN Dispersao S ON D.ID_Motorista = S.ID_Motorista AND D.Data = S.Data
-                LEFT JOIN Rating R ON D.ID_Motorista = R.ID_Motorista AND D.Data = R.Data
-                LEFT JOIN Reposicao P ON D.ID_Motorista = P.ID_Motorista AND D.Data = P.Data
-                LEFT JOIN Refugo F ON D.ID_Motorista = F.ID_Motorista AND D.Data = F.Data
-                WHERE D.ID_Motorista = %s
-                ORDER BY D.Data ASC
-            """, (id_selecionado,))
-            
+            # Montar a query com filtro condicional para mês
+            if filtro_mes:
+                query = """
+                    SELECT 
+                        CONVERT(varchar, D.Data, 23) AS DataISO, 
+                        D.Devolucao_Porcentagem, 
+                        ISNULL(S.Dispersao_KM, 0) AS Dispersao_KM,
+                        R.Rating,
+                        ISNULL(P.Reposicao_Valor, 0) AS Reposicao_Valor,
+                        ISNULL(F.Refugo_Porcentagem, 0) AS Refugo_Porcentagem
+                    FROM Devolucao D
+                    LEFT JOIN Dispersao S ON D.ID_Motorista = S.ID_Motorista AND D.Data = S.Data
+                    LEFT JOIN Rating R ON D.ID_Motorista = R.ID_Motorista AND D.Data = R.Data
+                    LEFT JOIN Reposicao P ON D.ID_Motorista = P.ID_Motorista AND D.Data = P.Data
+                    LEFT JOIN Refugo F ON D.ID_Motorista = F.ID_Motorista AND D.Data = F.Data
+                    WHERE D.ID_Motorista = %s AND FORMAT(D.Data, 'yyyy-MM') = %s
+                    ORDER BY D.Data ASC
+                """
+                cursor.execute(query, (id_selecionado, filtro_mes))
+            else:
+                query = """
+                    SELECT 
+                        CONVERT(varchar, D.Data, 23) AS DataISO, 
+                        D.Devolucao_Porcentagem, 
+                        ISNULL(S.Dispersao_KM, 0) AS Dispersao_KM,
+                        R.Rating,
+                        ISNULL(P.Reposicao_Valor, 0) AS Reposicao_Valor,
+                        ISNULL(F.Refugo_Porcentagem, 0) AS Refugo_Porcentagem
+                    FROM Devolucao D
+                    LEFT JOIN Dispersao S ON D.ID_Motorista = S.ID_Motorista AND D.Data = S.Data
+                    LEFT JOIN Rating R ON D.ID_Motorista = R.ID_Motorista AND D.Data = R.Data
+                    LEFT JOIN Reposicao P ON D.ID_Motorista = P.ID_Motorista AND D.Data = P.Data
+                    LEFT JOIN Refugo F ON D.ID_Motorista = F.ID_Motorista AND D.Data = F.Data
+                    WHERE D.ID_Motorista = %s
+                    ORDER BY D.Data ASC
+                """
+                cursor.execute(query, (id_selecionado,))
+
             resultados = cursor.fetchall()
 
+            # Processa resultados igual antes...
             for linha in resultados:
                 data = linha['DataISO']
                 if data:
@@ -244,7 +279,6 @@ def painel_supervisor():
                     reposicao = linha['Reposicao_Valor'] if linha['Reposicao_Valor'] is not None else 0
                     refugo = linha['Refugo_Porcentagem'] if linha['Refugo_Porcentagem'] is not None else 0
 
-                # Rating sempre entra, independente da Devolução
                 rating = linha['Rating'] if linha['Rating'] is not None else "-"
 
                 dados_formatados.append({
@@ -252,16 +286,16 @@ def painel_supervisor():
                     'Devolucao_Porcentagem': devolucao_porcentagem_valor,
                     'Dispersao_KM': dispersao,
                     'Rating': rating.replace(',00', ''),
-                    'Reposicao_Valor': reposicao.replace('.', ','),
+                    'Reposicao_Valor': reposicao.replace('.', ',') if isinstance(reposicao, str) else str(reposicao).replace('.', ','),
                     'Refugo_Porcentagem': refugo
                 })
-
 
         cursor.close()
         conexao.close()
 
     indicadores = dados_formatados
-        # Calcular médias
+
+    # Calcular médias (sua função calcular_media deve estar disponível)
     media_devolucao_porcentagem = calcular_media(dados_formatados, 'Devolucao_Porcentagem', ignora_percentual=True)
     media_dispersao_km = calcular_media(dados_formatados, 'Dispersao_KM', ignora_percentual=True)
     media_rating = calcular_media(dados_formatados, 'Rating')
@@ -270,7 +304,6 @@ def painel_supervisor():
         for item in dados_formatados 
         if item['Reposicao_Valor'] not in (None, '', 'N/A', '-')
     )
-
     media_refugo = calcular_media(dados_formatados, 'Refugo_Porcentagem', ignora_percentual=True)
 
     medias = {
@@ -286,8 +319,11 @@ def painel_supervisor():
         funcionarios=funcionarios,
         indicadores=dados_formatados,
         mensagem=mensagem,
-        medias=medias
+        medias=medias,
+        filtro_mes=filtro_mes,
+        id_selecionado=id_selecionado
     )
+
 
 
 

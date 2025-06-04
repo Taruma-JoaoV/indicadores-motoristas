@@ -18,11 +18,19 @@
         <select name="id_motorista_selecionado" required>
             <option value="" disabled selected>Escolha um funcionário</option>
             {% for f in funcionarios %}
-                <option value="{{ f.ID_Motorista }}">{{ f.Nome_Completo }} ({{ f.ID_Motorista }})</option>
+                <option value="{{ f.ID_Motorista }}"
+                    {% if id_selecionado == f.ID_Motorista %}selected{% endif %}>
+                    {{ f.Nome_Completo }} ({{ f.ID_Motorista }})
+                </option>
             {% endfor %}
         </select>
+
+        <label for="filtro_mes" id="label_filtro">Filtrar mês:</label>
+        <input type="month" id="filtro_mes" name="filtro_mes" value="{{ filtro_mes or '' }}" />
+
         <button type="submit">Ver Indicadores</button>
     </form>
+
 
     {% if mensagem %}
         <p>{{ mensagem }}</p>
