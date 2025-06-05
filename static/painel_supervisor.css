@@ -136,41 +136,54 @@ p {
 
 /* Responsividade */
 @media (max-width: 768px) {
-    .topo {
-        flex-direction: column;
-        align-items: flex-start;
+    h1{
+
     }
 
-    .links-wrapper {
-        flex-direction: column;
-        gap: 10px;
-        width: 100%;
+    .topo{
+        align-items: baseline;
+        flex-wrap: nowrap;
     }
 
-    table, thead, tbody, tfoot, th, td, tr {
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    select, label, button {
+        margin-top: 20px;
+    }
+
+    table, thead, tbody, th, td, tr {
         display: block;
     }
 
-    th {
-        text-align: left;
-        background-color: #222;
-        color: #2196F3;
+    thead {
+        display: none;
+    }
+
+    tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #2196F3;
     }
 
     td {
+        padding-left: 50%;
+        position: relative;
         text-align: left;
         border: none;
         border-bottom: 1px solid #444;
-        padding-left: 50%;
-        position: relative;
     }
 
     td::before {
         position: absolute;
+        top: 10px;
         left: 10px;
         width: 45%;
         white-space: nowrap;
         font-weight: bold;
+        color: #2196F3;
     }
 
     tbody td:nth-of-type(1)::before { content: "Data"; }
@@ -180,9 +193,10 @@ p {
     tbody td:nth-of-type(5)::before { content: "Reposição"; }
     tbody td:nth-of-type(6)::before { content: "Refugo (%)"; }
 
-    tfoot td {
-        display: inline-block;
+    tfoot {
+        display: table;
         width: 100%;
+        table-layout: fixed;
     }
 
     #metas td::before {
