@@ -25,12 +25,12 @@ def login():
     mensagem = ''
     if request.method == 'POST':
         id_motorista = request.form['id_motorista']
-        senha = request.form['senha']
+        senha = request.form['cpf']
 
         conexao = conectar_banco()
         if conexao:
             cursor = conexao.cursor(as_dict=True)
-            cursor.execute("SELECT * FROM Motoristas WHERE ID_Motorista = %s AND Senha = %s", (id_motorista, senha))
+            cursor.execute("SELECT * FROM Motoristas WHERE ID_Motorista = %s AND CPF = %s", (id_motorista, senha))
             motorista = cursor.fetchone()
             cursor.close()
             conexao.close()
