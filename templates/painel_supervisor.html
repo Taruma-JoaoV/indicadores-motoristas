@@ -94,6 +94,20 @@
         </tfoot>
 
         </table>
+        <div>
+            <h2>Observações</h2>
+        {% if observacoes %}
+            <ul>
+            {% for item in observacoes %}
+                <li>{{ item.data }}: {{ item.texto }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>Não há observações registradas.</p>
+        {% endif %}
+        </div>
     {% endif %}
+
+    
 </body>
 </html>

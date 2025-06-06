@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 import pymssql
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'chave-padrao-fraca')
@@ -262,7 +263,7 @@ def painel_supervisor():
 
             resultados = cursor.fetchall()
 
-            # Processa resultados igual antes...
+            # Processa resultados
             for linha in resultados:
                 data = linha['DataISO']
                 if data:
@@ -297,6 +298,10 @@ def painel_supervisor():
         cursor.execute("SELECT Prontuario FROM Telemetria WHERE ID_Motorista = %s", (id_selecionado,))
         resultado_prontuario = cursor.fetchone()
         prontuario = resultado_prontuario['Prontuario'] if resultado_prontuario else ""
+
+        cursor.execute("SELECT Data, Texto FROM Observacoes WHERE ID_Motorista = %s", (id_selecionado,))
+        observacoes = [{'data': linha['Data'], 'texto': linha['Texto']} for linha in cursor.fetchall()]
+
         cursor.close()
         conexao.close()
 
@@ -329,7 +334,8 @@ def painel_supervisor():
         medias=medias,
         filtro_mes=filtro_mes,
         id_selecionado=id_selecionado,
-        prontuario=prontuario
+        prontuario=prontuario,
+        observacoes=observacoes
     )
 
 
@@ -350,13 +356,14 @@ def observacao():
 
     texto = request.form.get('observacao', '').strip()
     id_motorista = session['id_motorista']
+    dia = datetime.now().strftime('%d/%m/%Y %H:%M')
 
     if texto:
         conexao = conectar_banco()
         if conexao:
             cursor = conexao.cursor(as_dict=True)
             try:
-                cursor.execute("INSERT INTO Observacoes (ID_Motorista, Texto) VALUES (%s, %s)", (id_motorista, texto))
+                cursor.execute("INSERT INTO Observacoes (ID_Motorista, Data, Texto) VALUES (%s, %s, %s)", (id_motorista, dia, texto))
                 conexao.commit()
             except Exception as e:
                 print("Erro ao salvar observação:", e)
