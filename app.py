@@ -149,6 +149,10 @@ def painel():
 
             cursor.execute("SELECT Texto FROM Observacoes WHERE ID_Motorista = %s", (id_motorista,))
             observacoes = [linha['Texto'] for linha in cursor.fetchall()]
+            cursor.execute("SELECT Prontuario FROM Telemetria WHERE ID_Motorista = %s", (id_motorista,))
+            resultado_prontuario = cursor.fetchone()
+            prontuario = resultado_prontuario['Prontuario'] if resultado_prontuario else ""
+
 
         except Exception as e:
             print("Erro ao consultar o banco:", e)
@@ -174,6 +178,7 @@ def painel():
                                'Reposicao_Valor': f"{soma_reposicao:.2f}".replace('.', ','),
                                'Refugo_Porcentagem': media_refugo
                            },
+                           prontuario=prontuario,
                            mes_atual=mes_selecionado or "")
 
 
@@ -289,7 +294,9 @@ def painel_supervisor():
                     'Reposicao_Valor': reposicao.replace('.', ',') if isinstance(reposicao, str) else str(reposicao).replace('.', ','),
                     'Refugo_Porcentagem': refugo
                 })
-
+        cursor.execute("SELECT Prontuario FROM Telemetria WHERE ID_Motorista = %s", (id_selecionado,))
+        resultado_prontuario = cursor.fetchone()
+        prontuario = resultado_prontuario['Prontuario'] if resultado_prontuario else ""
         cursor.close()
         conexao.close()
 
@@ -321,7 +328,8 @@ def painel_supervisor():
         mensagem=mensagem,
         medias=medias,
         filtro_mes=filtro_mes,
-        id_selecionado=id_selecionado
+        id_selecionado=id_selecionado,
+        prontuario=prontuario
     )
 
 

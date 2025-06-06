@@ -60,10 +60,6 @@ select {
     margin-right: 10px;
 }
 
-#label_filtro {
-    
-}
-
 button {
     background-color: #2196F3;
     color: white;
@@ -134,10 +130,19 @@ p {
     border-radius: 4px;
 }
 
+p strong {
+    color: yellow;
+    
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     h1{
 
+    }
+
+    p {
+        font-size: 12px;
     }
 
     .topo{
