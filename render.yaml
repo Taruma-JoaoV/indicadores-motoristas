@@ -1,9 +1,11 @@
 services:
   - type: web
-    name: painel-indicadores
+    name: indicadores-motoristas
     env: python
     buildCommand: ""
     startCommand: gunicorn app:app
     envVars:
       - key: DATABASE_URL
-        value: "SUA_STRING_DE_CONEXÃO_DO_SQL_SERVER"
+        value: "postgres://usuario:senha@host:porta/banco"
+      - key: SECRET_KEY
+        value: "uma-chave-secreta-aqui"

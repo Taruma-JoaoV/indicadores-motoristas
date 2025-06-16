@@ -19,9 +19,9 @@
         <select name="id_motorista_selecionado" required>
             <option value="" disabled selected>Escolha um funcionário</option>
             {% for f in funcionarios %}
-                <option value="{{ f.ID_Motorista }}"
-                    {% if id_selecionado == f.ID_Motorista %}selected{% endif %}>
-                    {{ f.Nome_Completo }} ({{ f.ID_Motorista }})
+                <option value="{{ f.id_motorista }}"
+                    {% if id_selecionado == f.id_motorista %}selected{% endif %}>
+                    {{ f.nome_completo }} ({{ f.id_motorista }})
                 </option>
             {% endfor %}
         </select>
@@ -46,7 +46,7 @@
                     <th>Data</th>
                     <th>% Devolução (PDV)</th>
                     <th>Dispersão (KM)</th>
-                    <th>Rating</th>
+                    <th>rating</th>
                     <th>Reposição</th>
                     <th>Refugo (%)</th>
                 </tr>
@@ -54,12 +54,12 @@
             <tbody>
                 {% for item in indicadores %}
                 <tr>
-                    <td>{{ item.Data }}</td>
-                    <td>{{ item.Devolucao_Porcentagem }}</td>
-                    <td>{{ item.Dispersao_KM }}</td>
-                    <td>{{ item.Rating }}</td>
-                    <td>{{ item.Reposicao_Valor }}</td>
-                    <td>{{ item.Refugo_Porcentagem }}</td>
+                    <td>{{ item.data }}</td>
+                    <td>{{ item.devolucao_porcentagem }}</td>
+                    <td>{{ item.dispersao_km }}</td>
+                    <td>{{ item.rating }}</td>
+                    <td>{{ item.reposicao_valor }}</td>
+                    <td>{{ item.refugo_porcentagem }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -67,20 +67,20 @@
             <tfoot>
             <tr>
                 <td><strong>Consolidado</strong></td>
-                <td class="{{ 'bg-vermelho' if medias['Devolucao_Porcentagem'] != '-' and medias['Devolucao_Porcentagem']|float > 1.7 else 'bg-verde' }}">
-                    {{ medias['Devolucao_Porcentagem'] if medias['Devolucao_Porcentagem'] != '-' else '-' }}{% if medias['Devolucao_Porcentagem'] != '-' %}%{% endif %}
+                <td class="{{ 'bg-vermelho' if medias['devolucao_porcentagem'] != '-' and medias['devolucao_porcentagem']|float > 1.7 else 'bg-verde' }}">
+                    {{ medias['devolucao_porcentagem'] if medias['devolucao_porcentagem'] != '-' else '-' }}{% if medias['devolucao_porcentagem'] != '-' %}%{% endif %}
                 </td>
-                <td class="{{ 'bg-vermelho' if medias.Dispersao_KM|float > 10 else 'bg-verde' }}">
-                    {{ medias.Dispersao_KM }}%
+                <td class="{{ 'bg-vermelho' if medias.dispersao_km|float > 10 else 'bg-verde' }}">
+                    {{ medias.dispersao_km }}%
                 </td>
-                <td class="{{ 'bg-vermelho' if medias.Rating|float < 4.98 else 'bg-verde' }}">
-                    {{ medias.Rating }}
+                <td class="{{ 'bg-vermelho' if medias.rating|float < 4.98 else 'bg-verde' }}">
+                    {{ medias.rating }}
                 </td>
-                <td class="{{ 'bg-vermelho' if medias.Reposicao_Valor|float > 360 else 'bg-verde' }}">
-                    R${{ medias.Reposicao_Valor }}
+                <td class="{{ 'bg-vermelho' if medias.reposicao_valor|float > 360 else 'bg-verde' }}">
+                    R${{ medias.reposicao_valor }}
                 </td>
-                <td class="{{ 'bg-vermelho' if medias['Refugo_Porcentagem'] != '-' and medias['Refugo_Porcentagem']|float > 1.5 else 'bg-verde' }}">
-                    {{ medias['Refugo_Porcentagem'] if medias['Refugo_Porcentagem'] != '-' else '-' }}{% if medias['Refugo_Porcentagem'] != '-' %}%{% endif %}
+                <td class="{{ 'bg-vermelho' if medias['refugo_porcentagem'] != '-' and medias['refugo_porcentagem']|float > 1.5 else 'bg-verde' }}">
+                    {{ medias['refugo_porcentagem'] if medias['refugo_porcentagem'] != '-' else '-' }}{% if medias['refugo_porcentagem'] != '-' %}%{% endif %}
                 </td>
             </tr>
             <tr id="metas">
