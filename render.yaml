@@ -2,10 +2,11 @@ services:
   - type: web
     name: indicadores-motoristas
     env: python
-    buildCommand: ""
-    startCommand: gunicorn app:app
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
     envVars:
-      - key: DATABASE_URL
-        value: "postgres://usuario:senha@host:porta/banco"
       - key: SECRET_KEY
-        value: "uma-chave-secreta-aqui"
+        value: "cahve"
+      - key: DATABASE_URL
+        value: "string"
+    pythonVersion: "3.11"
