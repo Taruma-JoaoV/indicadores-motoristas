@@ -12,13 +12,7 @@ def conectar_banco():
         # DATABASE_URL:
         # host=host user=user password=password dbname=database port=5432
         conn_str = os.getenv('DATABASE_URL')
-        host, user, password, database = conn_str.split(';')
-        conexao = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database
-        )
+        conexao = psycopg2.connect(conn_str)
         return conexao
     except Exception as e:
         print("Erro ao conectar:", e)
