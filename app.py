@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, url_for
-import psycopg2
-import psycopg2.extras
+import psycopg
 import os
 from datetime import datetime
 
@@ -12,7 +11,7 @@ def conectar_banco():
         # DATABASE_URL:
         # host=host user=user password=password dbname=database port=5432
         conn_str = os.getenv('DATABASE_URL')
-        conexao = psycopg2.connect(conn_str)
+        conexao = psycopg.connect(conn_str)
         return conexao
     except Exception as e:
         print("Erro ao conectar:", e)
@@ -27,7 +26,7 @@ def login():
 
         conexao = conectar_banco()
         if conexao:
-            cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor = conexao.cursor(row_factory=psycopg.rows.dict_row)
             cursor.execute("SELECT * FROM Motoristas WHERE id_motorista = %s AND CPF = %s", (id_motorista, senha))
             motorista = cursor.fetchone()
             cursor.close()
@@ -86,7 +85,7 @@ def painel():
     if conexao:
         cursor = None
         try:
-            cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor = conexao.cursor(row_factory=psycopg.rows.dict_row)
 
             query = """
                     SELECT 
@@ -201,7 +200,7 @@ def painel_supervisor():
     id_selecionado = None
 
     if conexao:
-        cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor = conexao.cursor(row_factory=psycopg.rows.dict_row)
 
         cursor.execute("""
             SELECT DISTINCT m.id_motorista, m.nome_completo
@@ -366,7 +365,7 @@ def observacao():
     if texto:
         conexao = conectar_banco()
         if conexao:
-            cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor = conexao.cursor(row_factory=psycopg.rows.dict_row)
             try:
                 cursor.execute("INSERT INTO observacoes (id_motorista, data, texto) VALUES (%s, %s, %s)", (id_motorista, dia, texto))
                 conexao.commit()
